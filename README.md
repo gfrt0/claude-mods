@@ -15,9 +15,10 @@ Tracks per-session and monthly spending in the Claude Code status line.
 
 1. **Prerequisites:** Python 3 and [Claude Code](https://docs.anthropic.com/en/docs/claude-code) must be installed.
 
-2. **Clone or locate the repo** (synced via Dropbox):
+2. **Clone the repo:**
    ```bash
-   cd "/mnt/d/dropbox (personal)/git/claude-mods"
+   git clone https://github.com/gfrt0/claude-mods.git
+   cd claude-mods
    ```
 
 3. **Run the installer:**
