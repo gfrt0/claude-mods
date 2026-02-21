@@ -16,7 +16,7 @@ chmod +x "$CLAUDE_DIR/statusline.sh" "$CLAUDE_DIR/session-cost-logger.sh"
 python3 -c "
 import json, os
 
-settings_path = os.path.expanduser('$SETTINGS')
+settings_path = os.path.join(os.path.expanduser('~'), '.claude', 'settings.json')
 
 try:
     with open(settings_path) as f:
