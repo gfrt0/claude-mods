@@ -1,5 +1,0 @@
-{
-  "name": "review-commit",
-  "description": "Review code changes for cleanliness and create a git commit",
-  "author": { "name": "gfrt0" }
-}

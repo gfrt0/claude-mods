@@ -95,9 +95,9 @@ Adapted from [claude-code-notify-hook-in-WSL](https://github.com/wanyukang/claud
 
 ---
 
-## Skills (Custom Slash Commands)
+## Custom Slash Commands
 
-The `claude-skills/` directory is a Claude Code plugin marketplace that lives inside this repo. `install.sh` symlinks it into `~/.claude/plugins/marketplaces/` so Claude Code auto-discovers the commands.
+The `commands/` directory contains custom slash commands (`.md` files). `install.sh` copies them into `~/.claude/commands/` so Claude Code discovers them automatically.
 
 ### /review-commit
 
