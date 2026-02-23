@@ -1,0 +1,42 @@
+#!/bin/bash
+# Claude Code hook handler for WSL toast notifications.
+# Reads hook JSON from stdin, extracts a dynamic title/message, calls cc-notify.
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+python3 -c "
+import sys, json, os
+
+data = json.load(sys.stdin)
+event = data.get('hook_event_name', '')
+cwd = data.get('cwd', '')
+
+# Title: CLAUDE_TAB env var > basename of cwd > fallback
+title = os.environ.get('CLAUDE_TAB', '') or (os.path.basename(cwd) if cwd else '') or 'Claude Code'
+
+# Message depends on hook type
+if event == 'Notification':
+    message = data.get('message', '') or 'Notification'
+elif event == 'SubagentStop':
+    agent = data.get('agent_type', 'Subagent')
+    first_line = (data.get('last_assistant_message', '') or '').split('\n')[0].strip()
+    if first_line:
+        body = first_line[:100] + ('...' if len(first_line) > 100 else '')
+        message = f'{agent} done: {body}'
+    else:
+        message = f'{agent} done'
+else:
+    # Stop (and any other event)
+    first_line = (data.get('last_assistant_message', '') or '').split('\n')[0].strip()
+    if first_line:
+        message = first_line[:100] + ('...' if len(first_line) > 100 else '')
+    else:
+        message = 'Task finished'
+
+print(json.dumps({'title': title, 'message': message}))
+" | {
+    read -r payload
+    title=$(echo "$payload" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['title'])")
+    message=$(echo "$payload" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['message'])")
+    exec "$SCRIPT_DIR/cc-notify" "$title" "$message"
+}
