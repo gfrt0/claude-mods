@@ -3,7 +3,7 @@
 # Adapted from https://github.com/wanyukang/claude-code-notify-hook-in-WSL (MIT license).
 
 # Version configuration
-SCRIPT_VERSION="1.2.2"
+SCRIPT_VERSION="1.3.0"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PS_SCRIPT="$SCRIPT_DIR/notify.ps1"
 
@@ -26,27 +26,24 @@ check_and_update_ps_script() {
 
     if [ "$need_update" = true ]; then
         cat > "$PS_SCRIPT" << 'PSEOF'
-# Version: 1.2.2
+# Version: 1.3.0
 param($title, $message)
 
-try {
-    Add-Type -AssemblyName PresentationFramework
+Add-Type -AssemblyName PresentationFramework
 
-    $xaml = @"
+$xaml = @"
 <Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Notification" Height="140" Width="350"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
-        Topmost="True" ShowInTaskbar="False" ResizeMode="NoResize">
+        Topmost="True" ShowInTaskbar="False" ShowActivated="False" ResizeMode="NoResize">
     <Border Background="#FFFFFF" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="8" Padding="0">
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="5"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-
             <Border Grid.Column="0" Background="#4CAF50" CornerRadius="8,0,0,8"/>
-
             <StackPanel Grid.Column="1" Margin="15">
                 <TextBlock Text="$($title)" FontSize="16" FontWeight="Bold"
                            Foreground="#212121" Margin="0,0,0,10"/>
@@ -58,54 +55,36 @@ try {
 </Window>
 "@
 
-    $window = [Windows.Markup.XamlReader]::Parse($xaml)
+$window = [Windows.Markup.XamlReader]::Parse($xaml)
 
-    # Position window at top right
-    $window.Left = [System.Windows.SystemParameters]::WorkArea.Right - $window.Width - 20
-    $window.Top = 20
+# Position at top right of screen
+$window.Left = [System.Windows.SystemParameters]::WorkArea.Right - $window.Width - 20
+$window.Top = 20
+$window.Opacity = 0
 
-    # Set initial opacity to 0 for fade-in
-    $window.Opacity = 0
-
-    # Use a single timer to handle all animations
-    $animationStep = 0
-    $mainTimer = New-Object System.Windows.Threading.DispatcherTimer
-    $mainTimer.Interval = New-Object TimeSpan(0,0,0,0,20)
-    $mainTimer.Add_Tick({
-        $script:animationStep++
-
-        # Fade-in phase (0-25 steps = 0.5 seconds)
-        if ($script:animationStep -le 25) {
-            $window.Opacity = $script:animationStep / 25.0
-        }
-        # Wait phase (26-100 steps = 1.5 seconds)
-        elseif ($script:animationStep -le 100) {
-            $window.Opacity = 1.0
-        }
-        # Fade-out phase (101-125 steps = 0.5 seconds)
-        elseif ($script:animationStep -le 125) {
-            $remaining = 125 - $script:animationStep
-            $window.Opacity = $remaining / 25.0
-        }
-        # Close window
-        else {
-            $mainTimer.Stop()
-            $window.Close()
-        }
-    })
-
-    $mainTimer.Start()
-
-    try {
-        $window.ShowDialog() | Out-Null
-    } catch {
-        # Silently ignore errors on close
+# Animation timer: fade in (0.5s) -> hold (1.5s) -> fade out (0.5s) -> close
+$step = 0
+$timer = New-Object System.Windows.Threading.DispatcherTimer
+$timer.Interval = [TimeSpan]::FromMilliseconds(20)
+$timer.Add_Tick({
+    $script:step++
+    if ($script:step -le 25) {
+        $window.Opacity = $script:step / 25.0
+    } elseif ($script:step -le 100) {
+        $window.Opacity = 1.0
+    } elseif ($script:step -le 125) {
+        $window.Opacity = (125 - $script:step) / 25.0
+    } else {
+        $timer.Stop()
+        $window.Close()
     }
+})
+$timer.Start()
 
-} catch {
-    Write-Host "Error: $_"
-    Write-Host $_.Exception.Message
-}
+# Show without stealing focus; keep dispatcher alive until closed
+$window.Show()
+$window.Add_Closed({ [System.Windows.Threading.Dispatcher]::ExitAllFrames() })
+[System.Windows.Threading.Dispatcher]::Run()
 PSEOF
     fi
 }
