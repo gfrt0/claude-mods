@@ -5,7 +5,7 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 python3 -c "
-import sys, json, os
+import sys, json, os, re
 
 data = json.load(sys.stdin)
 event = data.get('hook_event_name', '')
@@ -14,24 +14,42 @@ cwd = data.get('cwd', '')
 # Title: CLAUDE_TAB env var > basename of cwd > fallback
 title = os.environ.get('CLAUDE_TAB', '') or (os.path.basename(cwd) if cwd else '') or 'Claude Code'
 
+def pick_line(text, max_len=100):
+    \"\"\"Pick the most informative line, skipping suggestions/questions.\"\"\"
+    if not text:
+        return None
+    lines = [l.strip() for l in text.strip().split('\n') if l.strip()]
+    if not lines:
+        return None
+    # Patterns that look like follow-up suggestions rather than action summaries
+    skip_re = re.compile(
+        r'^(would you|shall i|let me know|do you want|should i|feel free'
+        r'|if you.d like|you can also|you may|want me to|ready to)',
+        re.IGNORECASE,
+    )
+    for line in lines:
+        if line.endswith('?'):
+            continue
+        if skip_re.match(line):
+            continue
+        if len(line) < 3:
+            continue
+        chosen = line
+        break
+    else:
+        chosen = lines[0]
+    return chosen[:max_len] + ('...' if len(chosen) > max_len else '')
+
 # Message depends on hook type
 if event == 'Notification':
     message = data.get('message', '') or 'Notification'
 elif event == 'SubagentStop':
     agent = data.get('agent_type', 'Subagent')
-    first_line = (data.get('last_assistant_message', '') or '').split('\n')[0].strip()
-    if first_line:
-        body = first_line[:100] + ('...' if len(first_line) > 100 else '')
-        message = f'{agent} done: {body}'
-    else:
-        message = f'{agent} done'
+    body = pick_line(data.get('last_assistant_message', ''))
+    message = f'{agent} done: {body}' if body else f'{agent} done'
 else:
     # Stop (and any other event)
-    first_line = (data.get('last_assistant_message', '') or '').split('\n')[0].strip()
-    if first_line:
-        message = first_line[:100] + ('...' if len(first_line) > 100 else '')
-    else:
-        message = 'Task finished'
+    message = pick_line(data.get('last_assistant_message', '')) or 'Task finished'
 
 print(json.dumps({'title': title, 'message': message}))
 " | {
