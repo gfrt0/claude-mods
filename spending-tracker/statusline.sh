@@ -35,5 +35,6 @@ filled = pct * 10 // 100
 bar = '\u2593' * filled + '\u2591' * (10 - filled)
 
 print(f'Session: \${session_cost:.2f} | Month ({month_name}): \${combined:.2f}')
-print(f'{bar} {pct}% context')
+model = data.get('model', {}).get('display_name', '?')
+print(f'[{model}] {bar} {pct}% context')
 "
