@@ -35,6 +35,13 @@ filled = pct * 10 // 100
 bar = '\u2593' * filled + '\u2591' * (10 - filled)
 
 print(f'Session: \${session_cost:.2f} | Month ({month_name}): \${combined:.2f}')
-model = data.get('model', {}).get('display_name', '?')
+model_name = data.get('model', {}).get('display_name', '?')
+model_id = data.get('model', {}).get('id', '')
+# Extract version from id like 'claude-opus-4-6' -> '4.6'
+version = ''
+if model_id:
+    parts = model_id.replace('claude-', '').replace(model_name.lower() + '-', '').split('-')
+    version = '.'.join(p for p in parts[:2] if p.isdigit())
+model = f'{model_name} {version}'.strip()
 print(f'[{model}] {bar} {pct}% context')
 "
