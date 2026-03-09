@@ -28,5 +28,12 @@ except (FileNotFoundError, json.JSONDecodeError, ValueError):
     pass
 
 combined = monthly_total + session_cost
+
+# Context window usage
+pct = int(data.get('context_window', {}).get('used_percentage', 0) or 0)
+filled = pct * 10 // 100
+bar = '\u2593' * filled + '\u2591' * (10 - filled)
+
 print(f'Session: \${session_cost:.2f} | Month ({month_name}): \${combined:.2f}')
+print(f'{bar} {pct}% context')
 "
