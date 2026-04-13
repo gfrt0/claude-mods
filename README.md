@@ -95,6 +95,50 @@ Adapted from [claude-code-notify-hook-in-WSL](https://github.com/wanyukang/claud
 
 ---
 
+## auto-catchup
+
+Runs `/catchup` automatically at the start of every fresh Claude Code session in a git repo.
+
+**What it does:**
+- Hooks into `SessionStart` with `matcher: "startup"` (does NOT fire on `compact` or `resume` — those have their own restore flow)
+- Reads the project's `cwd` from the hook JSON, bails silently if not in a git repo
+- Emits a small breadcrumb (repo name, branch, last commit, dirty file count, presence of `session_logs/`) so context is visible even if `/catchup` is suppressed
+- Tells Claude: "Before responding to the user's first message, run `/catchup` to brief them. If the user explicitly says 'skip catchup', honor that."
+
+**Why:** With `/session-log` capturing context at the end of each session and `/catchup` reading session logs + git/gh/Myriad state at the start of the next, this hook closes the loop — you never have to remember to type `/catchup`. Together with the existing `pre-compact.sh` / `post-compact-restore.sh` flow (which handles mid-session compaction), every session begins with current context.
+
+**Requires:** `python3`, `git`. No network calls in the hook itself — `/catchup` does its own (gh, ssh myriad).
+
+### Setup
+
+1. **Prerequisites:** Python 3, [Claude Code](https://docs.anthropic.com/en/docs/claude-code), git.
+
+2. **Install:**
+   ```bash
+   bash auto-catchup/install.sh
+   ```
+   This copies `auto-catchup.sh` to `~/.claude/`, makes it executable, and adds a `SessionStart` entry with `matcher: "startup"` to `~/.claude/settings.json`. Existing `SessionStart` entries with other matchers (e.g. `compact|resume`) are preserved.
+
+3. **Allow the hook in Claude Code.** On first launch you'll be prompted to approve the hook. To pre-approve it, add this to `~/.claude/settings.local.json`:
+   ```json
+   {
+     "permissions": {
+       "allow": [
+         "Bash(bash /home/<user>/.claude/auto-catchup.sh)"
+       ]
+     }
+   }
+   ```
+   Replace `<user>` with your username.
+
+4. **Test directly:**
+   ```bash
+   echo '{"cwd": "/path/to/your/repo"}' | bash ~/.claude/auto-catchup.sh
+   ```
+   Should print a markdown breadcrumb. Try with a non-repo path to verify it exits silently.
+
+---
+
 ## Custom Slash Commands
 
 The `commands/` directory contains custom slash commands (`.md` files). `install.sh` copies them into `~/.claude/commands/` so Claude Code discovers them automatically.
