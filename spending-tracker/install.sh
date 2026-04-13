@@ -29,6 +29,10 @@ settings['statusLine'] = {
     'command': '~/.claude/statusline.sh'
 }
 
+# Enable lazy-loading of MCP tool schemas
+env = settings.setdefault('env', {})
+env['ENABLE_TOOL_SEARCH'] = 'true'
+
 hooks = settings.setdefault('hooks', {})
 session_end = hooks.get('SessionEnd', [])
 
