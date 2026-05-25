@@ -44,19 +44,9 @@ with open(history_file, 'w') as f:
 if delta <= 0:
     sys.exit(0)
 
-# Update monthly cost accumulator
+# Derive monthly total from history (self-healing if monthly-cost.json is lost)
 monthly_file = os.path.expanduser('~/.claude/monthly-cost.json')
-monthly_total = 0.0
-
-try:
-    with open(monthly_file) as f:
-        mdata = json.load(f)
-    if mdata.get('month') == current_month:
-        monthly_total = float(mdata.get('total_usd', 0))
-except (FileNotFoundError, json.JSONDecodeError, ValueError):
-    pass
-
-new_total = monthly_total + delta
+monthly_total = sum(v for k, v in history.items() if k != '_month')
 with open(monthly_file, 'w') as f:
-    json.dump({'month': current_month, 'total_usd': round(new_total, 4)}, f)
+    json.dump({'month': current_month, 'total_usd': round(monthly_total, 4)}, f)
 "
