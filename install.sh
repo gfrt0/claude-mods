@@ -11,6 +11,8 @@ echo
 bash "$SCRIPT_DIR/notify/install.sh"
 echo
 bash "$SCRIPT_DIR/auto-catchup/install.sh"
+echo
+bash "$SCRIPT_DIR/cluster-watch/install.sh"
 
 echo
 

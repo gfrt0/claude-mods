@@ -14,6 +14,33 @@ This installs all mods at once. You can also install each mod individually (see 
 
 ---
 
+## cluster-watch
+
+Waits on SGE cluster jobs and reports a terminal state, never the absence of one.
+
+**What it does:**
+- `~/.claude/watch_job.sh <job ids> ... ` polls over ssh and exits `0` DONE, `2` GONE (left the
+  queue without its artifacts), `3` TIMEOUT, `4` the watch itself is broken
+- `--selftest` probes once and REFUSES (exit 4) unless the evidence it waits for is readable right
+  now, so a watch whose positive branch cannot fire never starts
+- Finished means either files written per seed (`--results DIR --expect N`) or a line in the job's
+  log (`--done-grep PAT`, counting log files, so an array's tasks are counted with `--expect N`)
+- Log naming differs per project, so the glob is a flag: `--log-glob '{name}.{job}.*.out'`
+  (default `{name}.o{job}*`, SGE's own naming)
+- Per-project defaults come from `CLUSTER_WATCH_HOST`, `CLUSTER_WATCH_LOGS`,
+  `CLUSTER_WATCH_RESULTS`, `CLUSTER_WATCH_LOG_GLOB`
+
+**Why:** every hand-rolled watcher has failed the same way -- a path expanded on the wrong machine,
+a glob that matched nothing -- and reported "not yet" forever or called a healthy job dead. The
+`/watch` command drives this script.
+
+### Setup
+
+```bash
+bash cluster-watch/install.sh
+```
+
+
 ## spending-tracker
 
 Tracks per-session and monthly spending in the Claude Code status line.
