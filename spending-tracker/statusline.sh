@@ -184,19 +184,30 @@ else:
 pct = min(pct, 100)
 
 # Build progress bar
-bar_width = 10
-bar = ''
-for i in range(bar_width):
-    bar_start = i * 10
-    progress = pct - bar_start
-    if progress >= 8:
-        bar += f'{ACCENT}█{RESET}'
-    elif progress >= 3:
-        bar += f'{ACCENT}▄{RESET}'
-    else:
-        bar += f'{BAR_EMPTY}░{RESET}'
+def make_bar(pct, color):
+    bar = ''
+    for i in range(10):
+        progress = pct - i * 10
+        if progress >= 8:
+            bar += f'{color}█{RESET}'
+        elif progress >= 3:
+            bar += f'{color}▄{RESET}'
+        else:
+            bar += f'{BAR_EMPTY}░{RESET}'
+    return bar
 
-ctx = f'{bar} {GRAY}{pct_prefix}{pct}%{RESET}'
+ctx = f'🧠 {make_bar(pct, ACCENT)} {GRAY}{pct_prefix}{pct}%{RESET}'
+
+# --- Subscription usage (5-hour and 7-day windows; absent for API-key users) ---
+USAGE_WINDOWS = [('five_hour', '5h', '\033[38;5;208m'), ('seven_day', '7d', '\033[38;5;160m')]
+rate_limits = data.get('rate_limits') or {}
+usage = []
+for key, label, color in USAGE_WINDOWS:
+    used = (rate_limits.get(key) or {}).get('used_percentage')
+    if used is None:
+        continue
+    used = min(max(int(used), 0), 100)
+    usage.append(f'{GRAY}{label} {make_bar(used, color)} {GRAY}{used}%{RESET}')
 
 # --- Output ---
 cost_str = f'\${session_cost:.2f}/\${combined:.2f}'
@@ -204,6 +215,8 @@ output = f'{ACCENT}{cost_str}{GRAY} | {model} | 📁{dir_name}'
 if branch:
     output += f' | 🔀{branch} {git_status}'
 output += f' | {ctx}{RESET}'
+for u in usage:
+    output += f'{GRAY} | {u}'
 
 print(output)
 "
