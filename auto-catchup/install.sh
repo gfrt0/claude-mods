@@ -27,7 +27,7 @@ except (FileNotFoundError, json.JSONDecodeError):
 hooks = settings.setdefault('hooks', {})
 session_start = hooks.setdefault('SessionStart', [])
 
-hook_command = os.path.expanduser('~/.claude/auto-catchup.sh')
+hook_command = '~/.claude/auto-catchup.sh'
 
 # Dedup: normalise tilde and absolute path so re-installs don't duplicate.
 def _norm(cmd):
@@ -44,7 +44,7 @@ session_start = [
     )
 ]
 
-# Add the canonical absolute-path entry.
+# Add the canonical tilde-path entry, portable across machines and usernames.
 session_start.append({
     'matcher': 'startup',
     'hooks': [{

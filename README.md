@@ -151,7 +151,7 @@ Runs `/catchup` automatically at the start of every fresh Claude Code session in
    {
      "permissions": {
        "allow": [
-         "Bash(bash /home/<user>/.claude/auto-catchup.sh)"
+         "Bash(bash ~/.claude/auto-catchup.sh)"
        ]
      }
    }
@@ -170,15 +170,3 @@ Runs `/catchup` automatically at the start of every fresh Claude Code session in
 
 The `commands/` directory contains custom slash commands (`.md` files). `install.sh` copies them into `~/.claude/commands/` so Claude Code discovers them automatically.
 
-### /review-commit
-
-Reviews code changes for cleanliness, then commits.
-
-**What it does:**
-1. Gathers git context (status, diff, log, branch)
-2. Reads every changed file in full and checks for stale comments, TODOs, debug leftovers, unused imports, doc/code inconsistencies, and obvious bugs
-3. Fixes small issues automatically; stops and reports larger ones
-4. Stages relevant files and commits with a message matching the repo's existing style
-5. Verifies the commit with `git status`
-
-**Usage:** Type `/review-commit` in Claude Code after making changes.

@@ -48,7 +48,10 @@ fi
 # the user has no cluster state to check.
 HAS_PENDING_MYRIAD=""
 if [ -n "$HAS_SESSION_LOGS" ]; then
-    for log in $(ls -t "$CWD/session_logs/"*.md 2>/dev/null | head -5); do
+    # Newline-delimited read so filenames with spaces (e.g. Dropbox paths)
+    # survive intact — plain `for log in $(ls ...)` word-splits on IFS.
+    while IFS= read -r log; do
+        [ -z "$log" ] && continue
         if awk '
             /^## Myriad jobs/ || /^## Pending postprocess/ { in_section=1; next }
             /^## / { in_section=0 }
@@ -57,7 +60,7 @@ if [ -n "$HAS_SESSION_LOGS" ]; then
             HAS_PENDING_MYRIAD="yes"
             break
         fi
-    done
+    done < <(ls -t "$CWD/session_logs/"*.md 2>/dev/null | head -5)
 fi
 
 cat <<EOF

@@ -29,11 +29,5 @@ for md in "$SCRIPT_DIR/commands/"*.md; do
   echo "  Installed $(basename "$md") -> $COMMANDS_DIR/"
 done
 
-# Clean up old plugins/marketplaces structure if present (no longer used)
-if [ -d "$HOME/.claude/plugins" ]; then
-  rm -rf "$HOME/.claude/plugins"
-  echo "  Removed stale ~/.claude/plugins/ directory"
-fi
-
 echo
 echo "All mods and skills installed."
